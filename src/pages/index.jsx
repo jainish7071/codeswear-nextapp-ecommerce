@@ -1,3 +1,5 @@
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/footer";
 import Head from "next/head";
 
 export default function Home() {
@@ -9,9 +11,11 @@ export default function Home() {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      Hey this is codeSwear
-      <div className="mx-4">hey this is me</div>
-      <div className="mx-4 bg-slate-500">hey this is me</div>
+      <Navbar />
+      <div className="">
+        <img src="/wearthecode.png" width="100%" alt="" />
+      </div>
+      <Footer />
     </>
   );
 }
