@@ -33,7 +33,6 @@ const Login = () => {
     };
     let res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formBody) });
     let response = await res.json();
-    console.log(response);
     if (response.success) {
       localStorage.setItem("token", response.token);
       setEmail("");

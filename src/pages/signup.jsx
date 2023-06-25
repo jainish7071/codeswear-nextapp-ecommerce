@@ -37,19 +37,32 @@ const SignUp = () => {
     };
     let res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/signup`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formBody) });
     let response = await res.json();
-    setEmail("");
-    setName("");
-    setPassword("");
-    toast.success("Your Account has been created!", {
-      position: "top-left",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "light",
-    });
+    if (response.success) {
+      setEmail("");
+      setName("");
+      setPassword("");
+      toast.success("Your Account has been created!", {
+        position: "top-left",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    } else {
+      toast.error(response.error, {
+        position: "top-left",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
+      });
+    }
   };
 
   return (

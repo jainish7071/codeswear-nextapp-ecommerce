@@ -6,12 +6,11 @@ import jwt from "jsonwebtoken"
 const handler = async (req, res) => {
     if (req.method === 'POST') {
         let user = await User.findOne({ email: req.body.email })
-        const bytes = CryptoJS.AES.decrypt(user.password, "mySecretKey");
-        console.log(bytes.toString(CryptoJS.enc.Utf8));
+        const bytes = CryptoJS.AES.decrypt(user.password, process.env.CRYPTO_AES_SECRET);
         const decryptedPass = bytes.toString(CryptoJS.enc.Utf8);
         if (user) {
             if (req.body.email === user.email && req.body.password === decryptedPass) {
-                var token = jwt.sign({ email: user.email, name: user.name }, 'jwtSecret', { expiresIn: "2d" });
+                var token = jwt.sign({ email: user.email, name: user.name }, process.env.JWT_SERCRET, { expiresIn: "2d" });
                 res.status(200).json({ success: true, token })
             } else {
                 res.status(401).json({ success: false, error: "Invalid Credentials" })
