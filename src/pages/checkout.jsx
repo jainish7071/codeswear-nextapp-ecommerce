@@ -6,18 +6,18 @@ import Head from "next/head";
 import Script from "next/script";
 import { useState } from "react";
 import { useEffect } from "react";
-import { useCallback } from "react";
+import { toast } from "react-toastify";
 
-const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
+const Checkout = ({ cart, addToCart, clearCart, removeFromCart, subTotal }) => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [pincode, setPincode] = useState("");
   const [address, setAddress] = useState("");
-  const [city, setCity] = useState("");
+  const [district, setDistrict] = useState("");
   const [state, setState] = useState("");
-
   const [disabled, setDisabled] = useState(true);
+  const [user, setUser] = useState(null);
 
   const validateFormData = () => {
     if (name.length > 3 && email.length > 3 && phone.length > 3 && address.length > 10 && pincode.length === 6) {
@@ -28,10 +28,18 @@ const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
   };
 
   useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("myUser"));
+    if (user) {
+      setUser(user);
+      setEmail(user.email);
+    }
+  }, []);
+
+  useEffect(() => {
     validateFormData();
   }, [name, email, phone, address, pincode]);
 
-  const handleChange = (e) => {
+  const handleChange = async (e) => {
     let value = e.target.value;
     switch (e.target.name) {
       case "name":
@@ -41,6 +49,20 @@ const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
         setEmail(value);
         break;
       case "pincode":
+        if (value.length === 6) {
+          let pins = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/pincode`);
+          let pinJson = await pins.json();
+          if (Object.keys(pinJson).includes(value)) {
+            setDistrict(pinJson[value][0]);
+            setState(pinJson[value][1]);
+          } else {
+            setDistrict("");
+            setState("");
+          }
+        } else {
+          setDistrict("");
+          setState("");
+        }
         setPincode(value);
         break;
       case "address":
@@ -74,32 +96,48 @@ const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
       body: JSON.stringify(data),
     });
     let txnResponse = await a.json();
-    let txnToken = txnResponse.txnToken;
-    let config = {
-      root: "",
-      flow: "DEFAULT",
-      data: {
-        orderId: orderId,
-        token: txnToken,
-        tokenType: "TXN_TOKEN",
-        amount: subTotal,
-      },
-      handler: {
-        notifyMerchant: function (eventName, data) {
-          console.log("eventName => ", eventName);
-          console.log("data => ", data);
+
+    if (txnResponse.success) {
+      let txnToken = txnResponse.txnToken;
+      let config = {
+        root: "",
+        flow: "DEFAULT",
+        data: {
+          orderId: orderId,
+          token: txnToken,
+          tokenType: "TXN_TOKEN",
+          amount: subTotal,
         },
-      },
-    };
-    // initialze configuration using init method
-    window.Paytm.CheckoutJS.init(config)
-      .then(function onSuccess() {
-        // after successfully updating configuration, invoke JS Checkout
-        window.Paytm.CheckoutJS.invoke();
-      })
-      .catch(function onError(error) {
-        console.log("error => ", error);
+        handler: {
+          notifyMerchant: function (eventName, data) {
+            console.log("eventName => ", eventName);
+            console.log("data => ", data);
+          },
+        },
+      };
+      // initialze configuration using init method
+      window.Paytm.CheckoutJS.init(config)
+        .then(function onSuccess() {
+          // after successfully updating configuration, invoke JS Checkout
+          window.Paytm.CheckoutJS.invoke();
+        })
+        .catch(function onError(error) {
+          console.log("error => ", error);
+        });
+    } else {
+      localStorage.removeItem("cart");
+      clearCart();
+      toast.error(txnResponse.error, {
+        position: "top-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "light",
       });
+    }
   };
 
   return (
@@ -125,7 +163,7 @@ const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
             <label htmlFor="email" className="leading-7 text-sm text-gray-600">
               Email
             </label>
-            <input type="email" id="email" name="email" value={email} onChange={handleChange} className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
+            {user ? <input type="email" id="email" name="email" value={user.email} readOnly className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" /> : <input type="email" id="email" name="email" value={email} onChange={handleChange} className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />}
           </div>
         </div>
       </div>
@@ -135,16 +173,15 @@ const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
             Address
           </label>
           <textarea id="address" name="address" value={address} onChange={handleChange} className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" cols="30" rows="2"></textarea>
-          <input />
         </div>
       </div>
       <div className="mx-auto flex-wrap flex my-2">
         <div className="px-2 w-1/2">
           <div className="mb-4">
             <label htmlFor="phone" className="leading-7 text-sm text-gray-600">
-              Phone
+              Phone Number
             </label>
-            <input type="text" id="phone" name="phone" value={phone} onChange={handleChange} className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
+            <input type="text" id="phone" name="phone" placeholder="Your 10-Digit Phone Number" value={phone} onChange={handleChange} className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" />
           </div>
         </div>
         <div className="px-2 w-1/2">
@@ -167,10 +204,10 @@ const Checkout = ({ cart, addToCart, removeFromCart, subTotal }) => {
         </div>
         <div className="px-2 w-1/2">
           <div className="mb-4">
-            <label htmlFor="city" className="leading-7 text-sm text-gray-600">
-              City
+            <label htmlFor="district" className="leading-7 text-sm text-gray-600">
+              District
             </label>
-            <input type="text" value={city} id="city" name="city" className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" readOnly />
+            <input type="text" value={district} id="district" name="district" className="w-full bg-white rounded border border-gray-300 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 text-base outline-none text-gray-700 py-1 px-3 leading-8 transition-colors duration-200 ease-in-out" readOnly />
           </div>
         </div>
       </div>

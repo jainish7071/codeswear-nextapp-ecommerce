@@ -104,11 +104,13 @@ const Navbar = ({ logout, user, cart, addToCart, removeFromCart, clearCart, subT
         </ol>
         <div className="total my-3 font-bold">Subtotal: {subTotal}</div>
         <div className="flex">
-          <Link href="/checkout" className="flex mx-auto text-white bg-pink-500 border-0 py-1 px-2 focus:outline-none hover:bg-pink-600 rounded text-sm">
-            <BsFillBagCheckFill className="m-1" />
-            Checkout
+          <Link href="/checkout">
+            <button disabled={Object.keys(cart).length === 0} className="flex mx-auto disabled:bg-pink-300 text-white bg-pink-500 border-0 py-1 px-2 focus:outline-none hover:bg-pink-600 rounded text-sm">
+              <BsFillBagCheckFill className="m-1" />
+              Checkout
+            </button>
           </Link>
-          <button onClick={clearCart} className="flex mx-auto text-white bg-pink-500 border-0 py-1 px-2 focus:outline-none hover:bg-pink-600 rounded text-sm">
+          <button onClick={clearCart} disabled={Object.keys(cart).length === 0} className="flex mx-auto disabled:bg-pink-300 text-white bg-pink-500 border-0 py-1 px-2 focus:outline-none hover:bg-pink-600 rounded text-sm">
             Clear Cart
           </button>
         </div>

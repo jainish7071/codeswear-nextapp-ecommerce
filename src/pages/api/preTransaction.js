@@ -1,5 +1,6 @@
 import Order from '../../models/Order';
 import connectDb from "../../middleware/mongoose"
+import Product from '../../models/Product';
 
 const https = require('https');
 const PaytmChecksum = require('paytmchecksum');
@@ -7,11 +8,35 @@ const PaytmChecksum = require('paytmchecksum');
 const handler = async (req, res) => {
     if (req.method === "POST") {
 
-        // Check if the cart is tampered with --- [Pending]
+        // Check if the cart is tampered with
+        let sumTotal = 0;
+        const cart = req.body.cart;
+        if (req.body.subTotal <= 0) {
+            return res.status(200).json({ "success": false, "error": "Your Cart is Empty! Please build your cart and try again." })
+        }
+        for (let item in cart) {
+            let product = await Product.findOne({ slug: item })
+            sumTotal += product.price * cart[item].qty;
+            // Check if the cart items are out of stock
+            if (product.availableQty < cart[item].qty) {
+                return res.status(200).json({ "success": false, "error": "Some items in your cart went our of stock. Please try later!" })
+            }
+            if (product.price !== cart[item].price) {
+                return res.status(200).json({ "success": false, "error": "The price of some items in your cart have changed. Please try again" })
+            }
+        }
+        if (sumTotal != req.body.subTotal) {
+            return res.status(200).json({ success: false, "error": "The price of some items in your cart have changed. Please try again" })
+        }
 
-        // Check if the cart items are out of stock ----[Pending]
 
-        // Check if the details Are valid ----[Pending]
+        // Check if the details Are valid
+        if (req.body.phone.length != 10 || !Number.isInteger(req.body.phone)) {
+            return res.status(200).json({ success: false, "error": "Please Enter your 10-digit Phone number" })
+        }
+        if (req.body.pincode.length != 6 || !Number.isInteger(req.body.pincode)) {
+            return res.status(200).json({ success: false, "error": "Please Enter your 6-digit Pin-code" })
+        }
 
         // Initiate an order corresponding to this order id
         let order = new Order({
@@ -75,7 +100,9 @@ const handler = async (req, res) => {
                     });
 
                     post_res.on('end', function () {
-                        resolve(JSON.parse(response).body)
+                        let ress = JSON.parse(response).body;
+                        ress.success = true;
+                        resolve(ress);
                     });
                 });
 

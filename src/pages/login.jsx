@@ -9,7 +9,7 @@ const Login = () => {
   const router = useRouter();
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
+    if (localStorage.getItem("myUser")) {
       router.push("/");
     }
   }, []);
@@ -34,7 +34,7 @@ const Login = () => {
     let res = await fetch(`${process.env.NEXT_PUBLIC_HOST}/api/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formBody) });
     let response = await res.json();
     if (response.success) {
-      localStorage.setItem("token", response.token);
+      localStorage.setItem("myUser", JSON.stringify({ token: response.token, email: response.email }));
       setEmail("");
       setPassword("");
       toast.success("You Are Successfully logged in!", {

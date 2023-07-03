@@ -27,15 +27,15 @@ export default function App({ Component, pageProps }) {
       console.error(error);
       localStorage.clear();
     }
-    let token = localStorage.getItem("token");
-    if (token) {
-      setUser({ value: token });
+    let myUser = JSON.parse(localStorage.getItem("myUser"));
+    if (myUser) {
+      setUser({ value: myUser.token, email: myUser.email });
       setKey(Math.random());
     }
   }, [router.query]);
 
   const logout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("myUser");
     setUser(null);
     setKey(Math.random);
     toast.success("Logged Out Successfully!", {
