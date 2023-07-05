@@ -19,23 +19,22 @@ const Checkout = ({ cart, addToCart, clearCart, removeFromCart, subTotal }) => {
   const [disabled, setDisabled] = useState(true);
   const [user, setUser] = useState(null);
 
-  const validateFormData = () => {
-    if (name.length > 3 && email.length > 3 && phone.length > 3 && address.length > 10 && pincode.length === 6) {
-      setDisabled(false);
-    } else {
-      setDisabled(true);
-    }
-  };
-
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("myUser"));
-    if (user) {
+    if (user && user.token) {
       setUser(user);
       setEmail(user.email);
     }
   }, []);
 
   useEffect(() => {
+    const validateFormData = () => {
+      if (name.length > 3 && email.length > 3 && phone.length > 3 && address.length > 10 && pincode.length === 6) {
+        setDisabled(false);
+      } else {
+        setDisabled(true);
+      }
+    };
     validateFormData();
   }, [name, email, phone, address, pincode]);
 
@@ -126,7 +125,9 @@ const Checkout = ({ cart, addToCart, clearCart, removeFromCart, subTotal }) => {
         });
     } else {
       localStorage.removeItem("cart");
-      clearCart();
+      if (txnResponse.cartClear) {
+        clearCart();
+      }
       toast.error(txnResponse.error, {
         position: "top-left",
         autoClose: 5000,

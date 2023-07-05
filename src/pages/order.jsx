@@ -2,10 +2,12 @@ import React, { useEffect } from "react";
 import Order from "../models/Order";
 import mongoose from "mongoose";
 import { useRouter } from "next/router";
+import { useState } from "react";
 
 const MyOrder = ({ order, clearCart }) => {
   const products = order.products;
   const router = useRouter();
+  const [date, setDate] = useState("");
 
   useEffect(() => {
     if (!localStorage.getItem("myUser")) {
@@ -14,6 +16,7 @@ const MyOrder = ({ order, clearCart }) => {
     if (router.query.clearCart) {
       clearCart();
     }
+    setDate(new Date(order.createdAt));
   }, []);
   return (
     <section className="text-gray-600 body-font overflow-hidden">
@@ -23,6 +26,7 @@ const MyOrder = ({ order, clearCart }) => {
             <h2 className="text-sm title-font text-gray-500 tracking-widest">CODESWEAR.COM</h2>
             <h1 className="text-gray-900 text-xl md:text-3xl title-font font-medium mb-4">Order Id: #{order.orderId}</h1>
             <p className="leading-relaxed mb-4">Yayy! Your Order Has been successfully placed. </p>
+            <p className="leading-relaxed mb-4">Order placed On : {date && date.toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "long", day: "numeric" })} </p>
             <p>
               Your Payment status is : <span className="font-semibold text-slate-700">{order.status}</span>{" "}
             </p>
@@ -39,7 +43,9 @@ const MyOrder = ({ order, clearCart }) => {
                     {item.name} ({item.size}/{item.variant})
                   </span>
                   <span className="m-auto text-gray-900">{item.qty}</span>
-                  <span className="m-auto text-gray-900">₹{item.price}</span>
+                  <span className="m-auto text-gray-900">
+                    ₹{item.price} X {item.qty} = ₹{item.price * item.qty}
+                  </span>
                 </div>
               );
             })}

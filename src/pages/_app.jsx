@@ -54,6 +54,9 @@ export default function App({ Component, pageProps }) {
   };
 
   const addToCart = (itemCode, qty, price, name, size, variant) => {
+    if (Object.keys(cart) === 0) {
+      setKey(Math.random);
+    }
     let myCart = cart;
     if (itemCode in cart) {
       myCart[itemCode].qty = myCart[itemCode].qty + qty;
